@@ -1,6 +1,10 @@
 "use client";
 
-import { Author, NewAuthorParams, insertAuthorParams } from "@/lib/db/schema/authors";
+import {
+  Author,
+  NewAuthorParams,
+  insertAuthorParams,
+} from "@/lib/db/schema/authors";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -27,7 +31,7 @@ const AuthorForm = ({
   closeModal?: () => void;
 }) => {
   const { toast } = useToast();
-  
+
   const editing = !!author?.id;
 
   const router = useRouter();
@@ -39,14 +43,16 @@ const AuthorForm = ({
     // errors locally but not in production
     resolver: zodResolver(insertAuthorParams),
     defaultValues: author ?? {
-      name: ""
+      name: "",
+      location: "",
     },
   });
 
-  const onSuccess = async (action: "create" | "update" | "delete",
+  const onSuccess = async (
+    action: "create" | "update" | "delete",
     data?: { error?: string },
   ) => {
-        if (data?.error) {
+    if (data?.error) {
       toast({
         title: `${action
           .slice(0, 1)
@@ -61,8 +67,8 @@ const AuthorForm = ({
     await utils.authors.getAuthors.invalidate();
     router.refresh();
     if (closeModal) closeModal();
-        toast({
-      title: 'Success',
+    toast({
+      title: "Success",
       description: `Author ${action}d!`,
       variant: "default",
     });
@@ -96,16 +102,32 @@ const AuthorForm = ({
         <FormField
           control={form.control}
           name="name"
-          render={({ field }) => (<FormItem>
+          render={({ field }) => (
+            <FormItem>
               <FormLabel>Name</FormLabel>
-                <FormControl>
-            <Input {...field} />
-          </FormControl>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
 
               <FormMessage />
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button
           type="submit"
           className="mr-1"

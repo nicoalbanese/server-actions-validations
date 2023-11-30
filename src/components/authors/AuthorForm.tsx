@@ -48,6 +48,7 @@ const AuthorForm = ({
     resolver: zodResolver(insertAuthorParams),
     defaultValues: author ?? {
       name: "",
+      location: "",
     },
   });
   const [isCreating, setIsCreating] = useState(false);
@@ -110,6 +111,21 @@ const AuthorForm = ({
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button
           type="submit"
           className="mr-1"

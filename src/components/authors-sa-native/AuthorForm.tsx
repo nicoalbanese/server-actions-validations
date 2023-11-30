@@ -1,6 +1,10 @@
 "use client";
 
-import { Author, insertAuthorParams } from "@/lib/db/schema/authors";
+import {
+  Author,
+  NewAuthorParams,
+  insertAuthorParams,
+} from "@/lib/db/schema/authors";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,12 +16,14 @@ import {
   deleteAuthorAction,
   updateAuthorAction,
 } from "@/lib/actions/authors";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { Label } from "../ui/label";
 import { useFormStatus } from "react-dom";
 import { cn } from "@/lib/utils";
 
-type AuthorZodErrors = Record<keyof Author, string[]>;
+type AuthorZodErrors = Partial<
+  Record<keyof NewAuthorParams, string[] | undefined>
+>;
 
 const AuthorForm = ({
   author,
@@ -34,6 +40,9 @@ const AuthorForm = ({
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [errors, setErrors] = useState<AuthorZodErrors | null>(null);
+  const hasErrors =
+    errors !== null &&
+    Object.values(errors).some((error) => error !== undefined);
 
   const onSuccess = async (
     action: "create" | "update" | "delete",
@@ -61,17 +70,16 @@ const AuthorForm = ({
   };
 
   const handleSubmit = async (data: FormData) => {
-    // need to handle errors
     setErrors(null);
     const payload = Object.fromEntries(data.entries());
     try {
       const values = insertAuthorParams.parse(payload);
       if (editing) {
-        await updateAuthorAction({ ...values, id: author.id });
-        onSuccess("update");
+        const data = await updateAuthorAction({ ...values, id: author.id });
+        onSuccess("update", data);
       } else {
-        await createAuthorAction(values);
-        onSuccess("create");
+        const data = await createAuthorAction(values);
+        onSuccess("create", data);
       }
     } catch (e) {
       if (e instanceof z.ZodError) {
@@ -79,9 +87,28 @@ const AuthorForm = ({
       }
     }
   };
+
+  const handleChange = (event: FormEvent<HTMLFormElement>) => {
+    const target = event.target as EventTarget;
+    if (target instanceof HTMLInputElement) {
+      const field = target.name as keyof NewAuthorParams;
+      const result = insertAuthorParams.safeParse({
+        [field]: target.value,
+      });
+      const fieldError = result.success
+        ? undefined
+        : result.error.flatten().fieldErrors[field];
+
+      setErrors((prev) => ({
+        ...prev,
+        [field]: fieldError,
+      }));
+    }
+  };
+
   return (
-    <form action={handleSubmit} className={"space-y-8"}>
-      <div className="">
+    <form action={handleSubmit} onChange={handleChange} className={"space-y-4"}>
+      <div>
         <Label
           className={cn(
             "mb-2 inline-block",
@@ -93,16 +120,37 @@ const AuthorForm = ({
         <Input
           type="text"
           name="name"
-          className={cn(
-            errors?.name ? "ring ring-destructive ring-offset-destructive" : "",
-          )}
+          className={cn(errors?.name ? "ring ring-destructive" : "")}
           defaultValue={author?.name ?? ""}
         />
         {errors?.name ? (
           <p className="text-xs text-destructive mt-2">{errors.name[0]}</p>
-        ) : null}
+        ) : (
+          <div className="h-6" />
+        )}
       </div>
-      <SaveButton editing={editing} />
+      <div className="">
+        <Label
+          className={cn(
+            "mb-2 inline-block",
+            errors?.location ? "text-destructive" : "",
+          )}
+        >
+          Location
+        </Label>
+        <Input
+          type="text"
+          name="location"
+          className={cn(errors?.location ? "ring ring-destructive" : "")}
+          defaultValue={author?.location ?? ""}
+        />
+        {errors?.location ? (
+          <p className="text-xs text-destructive mt-2">{errors.location[0]}</p>
+        ) : (
+          <div className="h-6" />
+        )}
+      </div>
+      <SaveButton editing={editing} errors={hasErrors} />
       {editing ? (
         <Button
           type="button"
@@ -123,16 +171,22 @@ const AuthorForm = ({
 
 export default AuthorForm;
 
-const SaveButton = ({ editing }: { editing: Boolean }) => {
+const SaveButton = ({
+  editing,
+  errors,
+}: {
+  editing: Boolean;
+  errors: boolean;
+}) => {
   const { pending } = useFormStatus();
   const isCreating = pending && editing === false;
   const isUpdating = pending && editing === true;
   return (
     <Button
       type="submit"
-      className="mr-1"
-      disabled={isCreating || isUpdating}
-      aria-disabled={isCreating || isUpdating}
+      className="mr-2"
+      disabled={isCreating || isUpdating || errors}
+      aria-disabled={isCreating || isUpdating || errors}
     >
       {editing
         ? `Sav${isUpdating ? "ing..." : "e"}`

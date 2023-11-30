@@ -6,7 +6,14 @@ import { getAuthors } from "@/lib/api/authors/queries";
 export const insertAuthorSchema = authorSchema.omit({ id: true });
 
 export const insertAuthorParams = authorSchema
-  .extend({ name: z.string().min(5) })
+  .extend({
+    name: z
+      .string()
+      .min(5, { message: "Name must be more than 5 characters." }),
+    location: z
+      .string()
+      .min(3, { message: "City must be more than 3 characters." }),
+  })
   .omit({
     id: true,
     userId: true,

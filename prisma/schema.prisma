@@ -15,9 +15,12 @@ generator zod {
   prismaJsonNullability = true
 }
 
+// provider = "sqlite"
+// url      = "file:./dev.db"
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider     = "mysql"
+  relationMode = "prisma"
+  url          = env("DATABASE_URL")
 }
 
 model User {
@@ -51,7 +54,8 @@ model Key {
 }
 
 model Author {
-  id     String @id @default(cuid())
-  name   String
-  userId String
+  id       String @id @default(cuid())
+  name     String
+  location String
+  userId   String
 }
