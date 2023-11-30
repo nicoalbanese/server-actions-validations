@@ -7,12 +7,12 @@ generator client {
 
 generator zod {
   provider              = "zod-prisma"
-  output                = "./zod" 
-  relationModel         = true 
-  modelCase             = "camelCase" 
-  modelSuffix           = "Schema" 
-  useDecimalJs          = true 
-  prismaJsonNullability = true 
+  output                = "./zod"
+  relationModel         = true
+  modelCase             = "camelCase"
+  modelSuffix           = "Schema"
+  useDecimalJs          = true
+  prismaJsonNullability = true
 }
 
 datasource db {
@@ -20,14 +20,12 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-
 model User {
-  id           String    @id @unique
+  id String @id @unique
 
   username String
   name     String?
   email    String?
-
 
   auth_session Session[]
   key          Key[]
@@ -50,4 +48,10 @@ model Key {
   user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
 
   @@index([user_id])
+}
+
+model Author {
+  id     String @id @default(cuid())
+  name   String
+  userId String
 }
