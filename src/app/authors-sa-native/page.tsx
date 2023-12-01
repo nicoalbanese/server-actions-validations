@@ -3,9 +3,10 @@ import NewAuthorModal from "@/components/authors-sa-native/AuthorModal";
 import { checkAuth } from "@/lib/auth/utils";
 import { getAuthors } from "@/lib/api/authors/queries";
 
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
-export const dynamic = "force-dynamic";
+// export const revalidate = 0;
+// export const fetchCache = "force-no-store";
+// export const dynamic = "force-dynamic";
+
 export default async function Authors() {
   await checkAuth();
   const { authors } = await getAuthors();

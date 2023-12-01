@@ -15,9 +15,11 @@ import { Author } from "@/lib/db/schema/authors";
 export default function AuthorModal({
   author,
   emptyState,
+  disabled,
 }: {
   author?: Author;
   emptyState?: boolean;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const closeModal = () => setOpen(false);
@@ -48,6 +50,7 @@ export default function AuthorModal({
           <Button
             variant={editing ? "ghost" : "outline"}
             size={editing ? "sm" : "icon"}
+            disabled={disabled}
           >
             {editing ? "Edit" : "+"}
           </Button>

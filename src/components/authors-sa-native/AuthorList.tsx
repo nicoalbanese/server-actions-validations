@@ -15,41 +15,40 @@ export default function AuthorList({ authors }: { authors: CompleteAuthor[] }) {
     optimisticUpdateFn<CompleteAuthor>,
   );
 
-  if (optimisticAuthors.length === 0) {
-    return (
-      <AuthorContext.Provider value={{ addOptimisticAuthor }}>
-        <EmptyState />
-      </AuthorContext.Provider>
-    );
-  }
-
   return (
     <AuthorContext.Provider value={{ addOptimisticAuthor }}>
       <div className="absolute right-0 top-0 ">
         <AuthorModal />
       </div>
-      <ul>
-        {optimisticAuthors.map((author) => (
-          <Author author={author} key={author.id} />
-        ))}
-      </ul>
+      {optimisticAuthors.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <ul>
+          {optimisticAuthors.map((author) => (
+            <Author author={author} key={author.id} />
+          ))}
+        </ul>
+      )}
     </AuthorContext.Provider>
   );
 }
 
 const Author = ({ author }: { author: CompleteAuthor }) => {
   const optimistic = author.id === "optimistic";
+  const deleting = author.id === "delete";
+  const mutating = optimistic || deleting;
   return (
     <li
       className={cn(
         "flex justify-between my-2",
-        optimistic ? "opacity-50 animate-pulse" : "",
+        mutating ? "opacity-30 animate-pulse" : "",
+        deleting ? "text-destructive" : "",
       )}
     >
       <div className="w-full">
         <div>{author.name}</div>
       </div>
-      <AuthorModal author={author} />
+      <AuthorModal author={author} disabled={mutating} />
     </li>
   );
 };

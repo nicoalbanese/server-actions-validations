@@ -53,10 +53,7 @@ const AuthorForm = ({
   ) => {
     if (data?.error) {
       toast({
-        title: `${action
-          .slice(0, 1)
-          .toUpperCase()
-          .concat(action.slice(1))} Failed`,
+        title: `Failed to ${action}`,
         description: data.error,
         variant: "destructive",
       });
