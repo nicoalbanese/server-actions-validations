@@ -15,7 +15,7 @@ import {
   updateAuthorParams,
 } from "../db/schema/authors";
 
-const revalidateAuthors = () => revalidatePath("/authors-server-actions");
+const revalidateAuthors = () => revalidatePath("/authors-sa-native");
 
 export const createAuthorAction = async (input: NewAuthorParams) => {
   try {

@@ -5,7 +5,7 @@ import { checkAuth } from "@/lib/auth/utils";
 
 export default async function Authors() {
   await checkAuth();
-  const { authors } = await api.authors.getAuthors.query();  
+  const { authors } = await api.authors.getAuthors.query();
 
   return (
     <main className="max-w-3xl mx-auto p-4 rounded-lg bg-card">

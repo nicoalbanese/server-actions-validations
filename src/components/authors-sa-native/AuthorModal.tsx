@@ -12,10 +12,10 @@ import {
 import AuthorForm from "./AuthorForm";
 import { Author } from "@/lib/db/schema/authors";
 
-export default function AuthorModal({ 
+export default function AuthorModal({
   author,
   emptyState,
-}: { 
+}: {
   author?: Author;
   emptyState?: boolean;
 }) {
@@ -25,7 +25,7 @@ export default function AuthorModal({
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-      { emptyState ? (
+        {emptyState ? (
           <Button>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -45,16 +45,17 @@ export default function AuthorModal({
             New Author
           </Button>
         ) : (
-        <Button
-          variant={editing ? "ghost" : "outline"}
-          size={editing ? "sm" : "icon"}
-        >
-          {editing ? "Edit" : "+"}
-        </Button> )}
+          <Button
+            variant={editing ? "ghost" : "outline"}
+            size={editing ? "sm" : "icon"}
+          >
+            {editing ? "Edit" : "+"}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader className="px-5 pt-5">
-          <DialogTitle>{ editing ? "Edit" : "Create" } Author</DialogTitle>
+          <DialogTitle>{editing ? "Edit" : "Create"} Author</DialogTitle>
         </DialogHeader>
         <div className="px-5 pb-5">
           <AuthorForm closeModal={closeModal} author={author} />

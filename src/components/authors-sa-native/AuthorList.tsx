@@ -1,23 +1,51 @@
+"use client";
+
 import { CompleteAuthor } from "@/lib/db/schema/authors";
 import AuthorModal from "./AuthorModal";
+import { useOptimistic, createContext } from "react";
+import { AddOptimisticFn, cn, optimisticUpdateFn } from "@/lib/utils";
+
+export const AuthorContext = createContext<{
+  addOptimisticAuthor: AddOptimisticFn<CompleteAuthor>;
+}>({ addOptimisticAuthor: () => {} });
 
 export default function AuthorList({ authors }: { authors: CompleteAuthor[] }) {
-  if (authors.length === 0) {
-    return <EmptyState />;
+  const [optimisticAuthors, addOptimisticAuthor] = useOptimistic(
+    authors,
+    optimisticUpdateFn<CompleteAuthor>,
+  );
+
+  if (optimisticAuthors.length === 0) {
+    return (
+      <AuthorContext.Provider value={{ addOptimisticAuthor }}>
+        <EmptyState />
+      </AuthorContext.Provider>
+    );
   }
 
   return (
-    <ul>
-      {authors.map((author) => (
-        <Author author={author} key={author.id} />
-      ))}
-    </ul>
+    <AuthorContext.Provider value={{ addOptimisticAuthor }}>
+      <div className="absolute right-0 top-0 ">
+        <AuthorModal />
+      </div>
+      <ul>
+        {optimisticAuthors.map((author) => (
+          <Author author={author} key={author.id} />
+        ))}
+      </ul>
+    </AuthorContext.Provider>
   );
 }
 
 const Author = ({ author }: { author: CompleteAuthor }) => {
+  const optimistic = author.id === "optimistic";
   return (
-    <li className="flex justify-between my-2">
+    <li
+      className={cn(
+        "flex justify-between my-2",
+        optimistic ? "opacity-50 animate-pulse" : "",
+      )}
+    >
       <div className="w-full">
         <div>{author.name}</div>
       </div>

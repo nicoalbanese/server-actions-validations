@@ -16,10 +16,11 @@ import {
   deleteAuthorAction,
   updateAuthorAction,
 } from "@/lib/actions/authors";
-import { FormEvent, useState } from "react";
+import { FormEvent, useContext, useState, useTransition } from "react";
 import { Label } from "../ui/label";
 import { useFormStatus } from "react-dom";
 import { cn } from "@/lib/utils";
+import { AuthorContext } from "./AuthorList";
 
 type AuthorZodErrors = Partial<
   Record<keyof NewAuthorParams, string[] | undefined>
@@ -32,7 +33,9 @@ const AuthorForm = ({
   author?: Author;
   closeModal?: () => void;
 }) => {
+  const [_, startMutate] = useTransition();
   const { toast } = useToast();
+  const authorCtx = useContext(AuthorContext);
 
   const editing = !!author?.id;
 
@@ -74,13 +77,28 @@ const AuthorForm = ({
     const payload = Object.fromEntries(data.entries());
     try {
       const values = insertAuthorParams.parse(payload);
-      if (editing) {
-        const data = await updateAuthorAction({ ...values, id: author.id });
-        onSuccess("update", data);
-      } else {
-        const data = await createAuthorAction(values);
-        onSuccess("create", data);
+      try {
+      } catch (e) {
+        console.error(e);
       }
+      startMutate(async () => {
+        if (editing) {
+          authorCtx.addOptimisticAuthor({
+            data: { ...values, id: author.id, userId: author.userId },
+            action: "update",
+          });
+
+          const data = await updateAuthorAction({ ...values, id: author.id });
+          onSuccess("update", data);
+        } else {
+          authorCtx.addOptimisticAuthor({
+            data: { ...values, id: "optimistic", userId: "" },
+            action: "create",
+          });
+          const data = await createAuthorAction(values);
+          onSuccess("create", data);
+        }
+      });
     } catch (e) {
       if (e instanceof z.ZodError) {
         setErrors(e.flatten().fieldErrors as AuthorZodErrors);
@@ -156,10 +174,17 @@ const AuthorForm = ({
           type="button"
           variant={"destructive"}
           onClick={async () => {
-            setIsDeleting(true);
-            await deleteAuthorAction(author.id);
-            setIsDeleting(false);
-            onSuccess("delete");
+            startMutate(async () => {
+              setIsDeleting(true);
+              authorCtx.addOptimisticAuthor({
+                data: author,
+                action: "delete",
+              });
+
+              await deleteAuthorAction(author.id);
+              setIsDeleting(false);
+              onSuccess("delete");
+            });
           }}
         >
           Delet{isDeleting ? "ing..." : "e"}

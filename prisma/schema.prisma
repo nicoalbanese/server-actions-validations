@@ -15,8 +15,11 @@ generator zod {
   prismaJsonNullability = true
 }
 
-// provider = "sqlite"
-// url      = "file:./dev.db"
+// datasource db {
+//   provider = "sqlite"
+//   url      = "file:./dev.db"
+// }
+
 datasource db {
   provider     = "mysql"
   relationMode = "prisma"
