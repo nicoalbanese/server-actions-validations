@@ -8,6 +8,7 @@ import { useOptimisticBooks } from "@/app/books-sa/useOptimisticBooks";
 import { Button } from "../ui/button";
 import { useState } from "react";
 import BookForm from "./BookForm";
+import { PlusIcon } from "lucide-react";
 
 type TOpenModal = (book?: Book) => void;
 
@@ -105,7 +106,9 @@ const EmptyState = ({ openModal }: { openModal: TOpenModal }) => {
         Get started by creating a new book.
       </p>
       <div className="mt-6">
-        <Button onClick={() => openModal()}>Create a new Book</Button>
+        <Button onClick={() => openModal()}>
+          <PlusIcon className="h-4" /> New Book
+        </Button>
       </div>
     </div>
   );

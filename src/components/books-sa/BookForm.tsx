@@ -16,7 +16,7 @@ import {
   deleteBookAction,
   updateBookAction,
 } from "@/lib/actions/books";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Author } from "@/lib/db/schema/authors";
 import { TAddOptimistic } from "@/app/books-sa/useOptimisticBooks";
 import { Action, cn } from "@/lib/utils";

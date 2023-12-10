@@ -23,7 +23,6 @@ function sleep(ms = 1000): Promise<void> {
 const revalidateAuthors = () => revalidatePath("/sa-complete-rewrite/authors");
 
 export const createAuthorAction = async (input: NewAuthorParams) => {
-  await sleep();
   try {
     const payload = insertAuthorParams.parse(input);
     await createAuthor(payload);
@@ -34,7 +33,6 @@ export const createAuthorAction = async (input: NewAuthorParams) => {
 };
 
 export const updateAuthorAction = async (input: UpdateAuthorParams) => {
-  await sleep();
   try {
     const payload = updateAuthorParams.parse(input);
     await updateAuthor(payload.id, payload);
@@ -45,7 +43,6 @@ export const updateAuthorAction = async (input: UpdateAuthorParams) => {
 };
 
 export const deleteAuthorAction = async (input: AuthorId) => {
-  await sleep();
   try {
     const payload = authorIdSchema.parse({ id: input });
     await deleteAuthor(payload.id);

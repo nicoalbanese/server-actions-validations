@@ -14,15 +14,10 @@ export default async function Home() {
       <ul className="mt-4 py-4 border-t">
         <li>
           <Button asChild variant="link">
-            <Link href="/authors">TRPC</Link>
+            <Link href="/authors-sa-native">Authors</Link>
           </Button>
           <Button asChild variant="link">
-            <Link href="/authors-sa-hf">Server Actions w/ react hook form</Link>
-          </Button>
-          <Button asChild variant="link">
-            <Link href="/authors-sa-native">
-              Server Actions w/ useOptimistic
-            </Link>
+            <Link href="/books-sa">Books</Link>
           </Button>
         </li>
       </ul>

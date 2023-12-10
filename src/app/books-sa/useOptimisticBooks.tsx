@@ -17,6 +17,7 @@ export const useOptimisticBooks = (
     ): CompleteBook[] => {
       const { data } = action;
 
+      // potential issue
       const optimisticAuthor = authors.find(
         (author) => author.id === data.authorId,
       )!;

@@ -30,7 +30,6 @@ import {
 import { useState, useTransition } from "react";
 import { Author } from "@/lib/db/schema/authors";
 
-// @ts-expecterror
 import { TAddOptimistic } from "@/app/books-hf-sa/useOptimisticBooks";
 import { Action } from "@/lib/utils";
 
