@@ -15,12 +15,12 @@ import {
   updateAuthorParams,
 } from "../db/schema/authors";
 
-function sleep(ms = 2000): Promise<void> {
+function sleep(ms = 1000): Promise<void> {
   console.log("Kindly remember to remove `sleep`");
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const revalidateAuthors = () => revalidatePath("/authors-sa-native");
+const revalidateAuthors = () => revalidatePath("/sa-complete-rewrite/authors");
 
 export const createAuthorAction = async (input: NewAuthorParams) => {
   await sleep();

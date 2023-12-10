@@ -1,4 +1,4 @@
-import AuthorList from "@/components/authors-sa-native/AuthorList";
+import AuthorList from "@/components/authors-sa-refactor/AuthorList";
 import { checkAuth } from "@/lib/auth/utils";
 import { getAuthors } from "@/lib/api/authors/queries";
 

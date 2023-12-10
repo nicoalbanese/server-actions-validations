@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Author,
-  NewAuthorParams,
-  insertAuthorParams,
-} from "@/lib/db/schema/authors";
+import { Book, NewBookParams, insertBookParams } from "@/lib/db/schema/books";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -17,43 +13,43 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  createAuthorAction,
-  deleteAuthorAction,
-  updateAuthorAction,
-} from "@/lib/actions/authors";
-import { useState } from "react";
 
-const AuthorForm = ({
-  author,
+const BookForm = ({
+  book,
   closeModal,
 }: {
-  author?: Author;
+  book?: Book;
   closeModal?: () => void;
 }) => {
   const { toast } = useToast();
-
-  const editing = !!author?.id;
+  const { data: authors } = trpc.authors.getAuthors.useQuery();
+  const editing = !!book?.id;
 
   const router = useRouter();
+  const utils = trpc.useContext();
 
-  const form = useForm<z.infer<typeof insertAuthorParams>>({
+  const form = useForm<z.infer<typeof insertBookParams>>({
     // latest Zod release has introduced a TS error with zodResolver
     // open issue: https://github.com/colinhacks/zod/issues/2663
     // errors locally but not in production
-    resolver: zodResolver(insertAuthorParams),
-    defaultValues: author ?? {
-      name: "",
-      location: "",
+    resolver: zodResolver(insertBookParams),
+    defaultValues: book ?? {
+      title: "",
+      authorId: "",
     },
   });
-  const [isCreating, setIsCreating] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const onSuccess = async (
     action: "create" | "update" | "delete",
@@ -71,26 +67,36 @@ const AuthorForm = ({
       return;
     }
 
+    await utils.books.getBooks.invalidate();
     router.refresh();
     if (closeModal) closeModal();
     toast({
       title: "Success",
-      description: `Author ${action}d!`,
+      description: `Book ${action}d!`,
       variant: "default",
     });
   };
 
-  const handleSubmit = async (values: NewAuthorParams) => {
+  const { mutate: createBook, isLoading: isCreating } =
+    trpc.books.createBook.useMutation({
+      onSuccess: (res) => onSuccess("create", res),
+    });
+
+  const { mutate: updateBook, isLoading: isUpdating } =
+    trpc.books.updateBook.useMutation({
+      onSuccess: (res) => onSuccess("update", res),
+    });
+
+  const { mutate: deleteBook, isLoading: isDeleting } =
+    trpc.books.deleteBook.useMutation({
+      onSuccess: (res) => onSuccess("delete", res),
+    });
+
+  const handleSubmit = (values: NewBookParams) => {
     if (editing) {
-      setIsUpdating(true);
-      await updateAuthorAction({ ...values, id: author.id });
-      setIsUpdating(false);
-      onSuccess("update");
+      updateBook({ ...values, id: book.id });
     } else {
-      setIsCreating(true);
-      await createAuthorAction(values);
-      setIsCreating(false);
-      onSuccess("create");
+      createBook(values);
     }
   };
   return (
@@ -98,10 +104,10 @@ const AuthorForm = ({
       <form onSubmit={form.handleSubmit(handleSubmit)} className={"space-y-8"}>
         <FormField
           control={form.control}
-          name="name"
+          name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Title</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -112,19 +118,33 @@ const AuthorForm = ({
         />
         <FormField
           control={form.control}
-          name="location"
+          name="authorId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location</FormLabel>
+              <FormLabel>Author Id</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={String(field.value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a author" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {authors?.authors.map((author) => (
+                      <SelectItem key={author.id} value={author.id.toString()}>
+                        {author.name}{" "}
+                        {/* TODO: Replace with a field from the author model */}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormControl>
 
               <FormMessage />
             </FormItem>
           )}
         />
-
         <Button
           type="submit"
           className="mr-1"
@@ -138,12 +158,7 @@ const AuthorForm = ({
           <Button
             type="button"
             variant={"destructive"}
-            onClick={async () => {
-              setIsDeleting(true);
-              await deleteAuthorAction(author.id);
-              setIsDeleting(false);
-              onSuccess("delete");
-            }}
+            onClick={() => deleteBook({ id: book.id })}
           >
             Delet{isDeleting ? "ing..." : "e"}
           </Button>
@@ -153,4 +168,4 @@ const AuthorForm = ({
   );
 };
 
-export default AuthorForm;
+export default BookForm;

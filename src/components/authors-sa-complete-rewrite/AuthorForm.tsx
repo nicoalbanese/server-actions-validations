@@ -1,63 +1,55 @@
 "use client";
 
-import { Author, insertAuthorParams } from "@/lib/db/schema/authors";
-
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
+import { Author, insertAuthorParams } from "@/lib/db/schema/authors";
 import {
   createAuthorAction,
   deleteAuthorAction,
   updateAuthorAction,
 } from "@/lib/actions/authors";
-import { useContext, useState, useTransition } from "react";
-import { Label } from "../ui/label";
-import { useFormStatus } from "react-dom";
-import { cn } from "@/lib/utils";
+import { Action, cn } from "@/lib/utils";
 import { AuthorContext } from "./AuthorList";
+
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
+import { useContext, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { useValidatedForm } from "@/lib/hooks/useValidatedForm";
+
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "../ui/label";
 
 const AuthorForm = ({
   author,
   closeModal,
+  authors,
 }: {
   author?: Author;
   closeModal?: () => void;
+  authors?: Author[];
 }) => {
-  const [, startMutate] = useTransition();
+  const router = useRouter();
+  const [mutating, startMutate] = useTransition();
   const { toast } = useToast();
-  const authorCtx = useContext(AuthorContext);
+  const { addOptimisticAuthor } = useContext(AuthorContext);
+  const { errors, hasErrors, setErrors, handleChange } =
+    useValidatedForm<Author>(insertAuthorParams);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const editing = !!author?.id;
 
-  const router = useRouter();
-
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const { errors, hasErrors, setErrors, handleChange } =
-    useValidatedForm<Author>(insertAuthorParams);
-
-  const onSuccess = async (
-    action: "create" | "update" | "delete",
-    data?: { error?: string },
-  ) => {
-    if (data?.error) {
-      toast({
-        title: `Failed to ${action}`,
-        description: data.error,
-        variant: "destructive",
-      });
-      return;
+  const onSuccess = (action: Action, data?: { error: string }) => {
+    const failed = Boolean(data?.error);
+    if (!failed) {
+      router.refresh();
+      closeModal && closeModal();
     }
 
-    router.refresh();
-    if (closeModal) closeModal();
     toast({
-      title: "Success",
-      description: `Author ${action}d!`,
-      variant: "default",
+      title: failed ? "Failed" : "Success",
+      description: failed ? `Failed to ${action}` : `Author ${action}d!`,
+      variant: failed ? "destructive" : "default",
     });
   };
 
@@ -67,22 +59,22 @@ const AuthorForm = ({
     try {
       const values = insertAuthorParams.parse(payload);
       startMutate(async () => {
-        if (editing) {
-          authorCtx.addOptimisticAuthor({
-            data: { ...values, id: author.id, userId: author.userId },
-            action: "update",
-          });
+        addOptimisticAuthor({
+          data: {
+            ...values,
+            id: editing ? author.id : "optimistic",
+            userId: editing ? author.userId : "",
+          },
+          action: editing ? "update" : "create",
+        });
 
-          const data = await updateAuthorAction({ ...values, id: author.id });
-          onSuccess("update", data);
+        let data;
+        if (editing) {
+          data = await updateAuthorAction({ ...values, id: author.id });
         } else {
-          authorCtx.addOptimisticAuthor({
-            data: { ...values, id: "optimistic", userId: "" },
-            action: "create",
-          });
-          const data = await createAuthorAction(values);
-          onSuccess("create", data);
+          data = await createAuthorAction(values);
         }
+        onSuccess(editing ? "update" : "create", data);
       });
     } catch (e) {
       if (e instanceof z.ZodError) {
@@ -105,6 +97,7 @@ const AuthorForm = ({
         <Input
           type="text"
           name="name"
+          disabled={mutating}
           className={cn(errors?.name ? "ring ring-destructive" : "")}
           defaultValue={author?.name ?? ""}
         />
@@ -126,6 +119,7 @@ const AuthorForm = ({
         <Input
           type="text"
           name="location"
+          disabled={mutating}
           className={cn(errors?.location ? "ring ring-destructive" : "")}
           defaultValue={author?.location ?? ""}
         />
@@ -143,20 +137,21 @@ const AuthorForm = ({
           onClick={async () => {
             startMutate(async () => {
               setIsDeleting(true);
-              authorCtx.addOptimisticAuthor({
+              addOptimisticAuthor({
                 data: author,
                 action: "delete",
               });
 
-              await deleteAuthorAction(author.id);
+              const data = await deleteAuthorAction(author.id);
               setIsDeleting(false);
-              onSuccess("delete");
+              onSuccess("delete", data);
             });
           }}
         >
           Delet{isDeleting ? "ing..." : "e"}
         </Button>
       ) : null}
+      <pre>authors, {JSON.stringify(authors, null, 2)}</pre>
     </form>
   );
 };

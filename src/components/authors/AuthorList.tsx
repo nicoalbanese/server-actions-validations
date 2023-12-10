@@ -1,14 +1,21 @@
+"use client";
 import { CompleteAuthor } from "@/lib/db/schema/authors";
+import { trpc } from "@/lib/trpc/client";
 import AuthorModal from "./AuthorModal";
 
 export default function AuthorList({ authors }: { authors: CompleteAuthor[] }) {
-  if (authors.length === 0) {
+  const { data: a } = trpc.authors.getAuthors.useQuery(undefined, {
+    initialData: { authors },
+    refetchOnMount: false,
+  });
+
+  if (a.authors.length === 0) {
     return <EmptyState />;
   }
 
   return (
     <ul>
-      {authors.map((author) => (
+      {a.authors.map((author) => (
         <Author author={author} key={author.id} />
       ))}
     </ul>

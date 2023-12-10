@@ -1,6 +1,10 @@
 "use client";
 
-import { Author, insertAuthorParams } from "@/lib/db/schema/authors";
+import {
+  Author,
+  NewAuthorParams,
+  insertAuthorParams,
+} from "@/lib/db/schema/authors";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,32 +16,36 @@ import {
   deleteAuthorAction,
   updateAuthorAction,
 } from "@/lib/actions/authors";
-import { useContext, useState, useTransition } from "react";
+import { FormEvent, useContext, useState, useTransition } from "react";
 import { Label } from "../ui/label";
 import { useFormStatus } from "react-dom";
-import { cn } from "@/lib/utils";
-import { AuthorContext } from "./AuthorList";
-import { useValidatedForm } from "@/lib/hooks/useValidatedForm";
+import { AddOptimisticFn, cn } from "@/lib/utils";
+
+type AuthorZodErrors = Partial<
+  Record<keyof NewAuthorParams, string[] | undefined>
+>;
 
 const AuthorForm = ({
   author,
+  addOptimisticAuthor,
   closeModal,
 }: {
   author?: Author;
+  addOptimisticAuthor: AddOptimisticFn<Author>;
   closeModal?: () => void;
 }) => {
   const [, startMutate] = useTransition();
   const { toast } = useToast();
-  const authorCtx = useContext(AuthorContext);
 
   const editing = !!author?.id;
 
   const router = useRouter();
 
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const { errors, hasErrors, setErrors, handleChange } =
-    useValidatedForm<Author>(insertAuthorParams);
+  const [errors, setErrors] = useState<AuthorZodErrors | null>(null);
+  const hasErrors =
+    errors !== null &&
+    Object.values(errors).some((error) => error !== undefined);
 
   const onSuccess = async (
     action: "create" | "update" | "delete",
@@ -66,9 +74,13 @@ const AuthorForm = ({
     const payload = Object.fromEntries(data.entries());
     try {
       const values = insertAuthorParams.parse(payload);
+      try {
+      } catch (e) {
+        console.error(e);
+      }
       startMutate(async () => {
         if (editing) {
-          authorCtx.addOptimisticAuthor({
+          addOptimisticAuthor({
             data: { ...values, id: author.id, userId: author.userId },
             action: "update",
           });
@@ -76,7 +88,7 @@ const AuthorForm = ({
           const data = await updateAuthorAction({ ...values, id: author.id });
           onSuccess("update", data);
         } else {
-          authorCtx.addOptimisticAuthor({
+          addOptimisticAuthor({
             data: { ...values, id: "optimistic", userId: "" },
             action: "create",
           });
@@ -86,8 +98,26 @@ const AuthorForm = ({
       });
     } catch (e) {
       if (e instanceof z.ZodError) {
-        setErrors(e.flatten().fieldErrors);
+        setErrors(e.flatten().fieldErrors as AuthorZodErrors);
       }
+    }
+  };
+
+  const handleChange = (event: FormEvent<HTMLFormElement>) => {
+    const target = event.target as EventTarget;
+    if (target instanceof HTMLInputElement) {
+      const field = target.name as keyof NewAuthorParams;
+      const result = insertAuthorParams.safeParse({
+        [field]: target.value,
+      });
+      const fieldError = result.success
+        ? undefined
+        : result.error.flatten().fieldErrors[field];
+
+      setErrors((prev) => ({
+        ...prev,
+        [field]: fieldError,
+      }));
     }
   };
 
@@ -143,7 +173,7 @@ const AuthorForm = ({
           onClick={async () => {
             startMutate(async () => {
               setIsDeleting(true);
-              authorCtx.addOptimisticAuthor({
+              addOptimisticAuthor({
                 data: author,
                 action: "delete",
               });

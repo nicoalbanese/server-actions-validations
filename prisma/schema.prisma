@@ -26,6 +26,7 @@ datasource db {
   url          = env("DATABASE_URL")
 }
 
+//
 model User {
   id String @id @unique
 
@@ -61,4 +62,15 @@ model Author {
   name     String
   location String
   userId   String
+  books    Book[]
+}
+
+model Book {
+  id       String @id @default(cuid())
+  title    String
+  author   Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  userId   String
+
+  @@index([userId])
 }
